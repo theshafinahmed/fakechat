@@ -1,7 +1,66 @@
 @import "tailwindcss";
 
+@theme {
+    /* Premium Dark Palette */
+    --color-background: #0a0a0c;
+    --color-foreground: #ffffff;
+
+    --color-surface: #161618;
+    --color-surface-hover: #1c1c1e;
+
+    --color-primary: #3390ec;
+    --color-primary-foreground: #ffffff;
+
+    --color-secondary: #8e8e93;
+    --color-muted: #1c1c1e;
+    --color-muted-foreground: #a1a1a1;
+
+    --color-border: #212123;
+
+    /* Telegram-like Accents */
+    --color-chat-bg: #0a0a0c;
+    --color-bubble-out: #2b5278; /* Sent message blue */
+    --color-bubble-in: #182533; /* Received message dark */
+
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --radius-2xl: 2rem;
+}
+
 @layer base {
     * {
         @apply select-none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        @apply bg-background text-foreground antialiased overflow-hidden;
+        font-feature-settings: "cv11", "ss01";
+        font-family:
+            -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+            Arial, sans-serif;
+    }
+
+    /* Smooth scroll and mobile optimizations */
+    html {
+        @apply scroll-smooth;
+        scrollbar-gutter: stable;
+    }
+}
+
+@layer utilities {
+    .premium-shadow {
+        box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.4);
+    }
+
+    .glass-effect {
+        @apply bg-opacity-80 backdrop-blur-xl border-b border-white/[0.05];
+    }
+
+    /* Prevent pull-to-refresh on mobile for a more native feel */
+    body {
+        overscroll-behavior: none;
     }
 }
