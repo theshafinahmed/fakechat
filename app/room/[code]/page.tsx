@@ -41,6 +41,7 @@ export default function ChatRoom() {
 
     const [inputText, setInputText] = useState("");
     const [showInfo, setShowInfo] = useState(false);
+    const [showNameSwitcher, setShowNameSwitcher] = useState(false);
     const [copied, setCopied] = useState(false);
     const [replyTo, setReplyTo] = useState<{
         id: string;
@@ -204,24 +205,74 @@ export default function ChatRoom() {
 
                     <div className="flex items-end gap-2">
                         {/* Name Switcher */}
-                        <div className="relative group self-center mb-1">
-                            <button className="flex items-center justify-center p-2 rounded-xl bg-surface border border-border text-secondary hover:text-primary transition-colors">
+                        <div className="relative self-center mb-1">
+                            <button
+                                onClick={() =>
+                                    setShowNameSwitcher(!showNameSwitcher)
+                                }
+                                className={cn(
+                                    "flex items-center justify-center p-2 rounded-xl border transition-all",
+                                    showNameSwitcher
+                                        ? "bg-primary text-white border-primary"
+                                        : "bg-surface border-border text-secondary hover:text-primary",
+                                )}
+                            >
                                 <UserCircle size={24} />
                             </button>
-                            <div className="absolute bottom-full left-0 mb-2 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all p-3 bg-surface border border-border rounded-2xl premium-shadow min-w-50">
-                                <p className="text-[10px] uppercase tracking-widest text-secondary font-bold mb-2 ml-1">
-                                    Change Identity
-                                </p>
-                                <input
-                                    type="text"
-                                    value={currentName}
-                                    onChange={(e) =>
-                                        setCurrentName(e.target.value)
-                                    }
-                                    className="w-full bg-muted border border-border rounded-lg p-2 text-sm focus:border-primary outline-none"
-                                    placeholder="Type a temporary name..."
-                                />
-                            </div>
+
+                            <AnimatePresence>
+                                {showNameSwitcher && (
+                                    <>
+                                        {/* Invisible backdrop to close on click outside */}
+                                        <div
+                                            className="fixed inset-0 z-40"
+                                            onClick={() =>
+                                                setShowNameSwitcher(false)
+                                            }
+                                        />
+                                        <motion.div
+                                            initial={{
+                                                opacity: 0,
+                                                y: 10,
+                                                scale: 0.95,
+                                            }}
+                                            animate={{
+                                                opacity: 1,
+                                                y: 0,
+                                                scale: 1,
+                                            }}
+                                            exit={{
+                                                opacity: 0,
+                                                y: 10,
+                                                scale: 0.95,
+                                            }}
+                                            className="absolute bottom-full left-0 mb-2 p-3 bg-surface border border-border rounded-2xl premium-shadow min-w-50 z-50"
+                                        >
+                                            <p className="text-[10px] uppercase tracking-widest text-secondary font-bold mb-2 ml-1">
+                                                Change Identity
+                                            </p>
+                                            <input
+                                                type="text"
+                                                autoFocus
+                                                value={currentName}
+                                                onChange={(e) =>
+                                                    setCurrentName(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter")
+                                                        setShowNameSwitcher(
+                                                            false,
+                                                        );
+                                                }}
+                                                className="w-full bg-muted border border-border rounded-lg p-2 text-sm focus:border-primary outline-none"
+                                                placeholder="New prank name..."
+                                            />
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
                         </div>
 
                         {/* Text Area */}
