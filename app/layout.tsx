@@ -1,3 +1,4 @@
+import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
@@ -19,7 +20,9 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className="antialiased">{children}</body>
+            <body className="antialiased">
+                <ConvexClientProvider>{children}</ConvexClientProvider>
+            </body>
         </html>
     );
 }
