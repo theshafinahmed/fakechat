@@ -82,6 +82,11 @@ export default function ChatRoom() {
 
         setInputText("");
         setReplyTo(null);
+
+        // Reset textarea height
+        if (inputRef.current) {
+            inputRef.current.style.height = "auto";
+        }
     };
 
     const copyCode = () => {
@@ -236,7 +241,11 @@ export default function ChatRoom() {
                                         e.target.scrollHeight + "px";
                                 }}
                                 onKeyDown={(e) => {
-                                    if (e.key === "Enter" && !e.shiftKey) {
+                                    // Ctrl+Enter or Cmd+Enter to send on desktop
+                                    if (
+                                        e.key === "Enter" &&
+                                        (e.ctrlKey || e.metaKey)
+                                    ) {
                                         e.preventDefault();
                                         handleSend();
                                     }
@@ -432,7 +441,7 @@ function MessageBubble({
                         </div>
                     )}
 
-                    <p className="text-[14px] leading-relaxed wrap-break-word">
+                    <p className="text-[14px] leading-relaxed wrap-break-word whitespace-pre-wrap">
                         {mainContent}
                     </p>
 
