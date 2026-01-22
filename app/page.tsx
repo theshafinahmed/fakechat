@@ -1,4 +1,3 @@
-"use strict";
 "use client";
 
 import { useMutation } from "convex/react";
@@ -20,6 +19,7 @@ export default function Home() {
     const [roomName, setRoomName] = useState("");
     const [creatorName, setCreatorName] = useState("");
     const [roomCode, setRoomCode] = useState("");
+    const [initialName, setInitialName] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -34,7 +34,9 @@ export default function Home() {
         setError("");
         try {
             const { code } = await createRoom({ name: roomName, creatorName });
-            router.push(`/room/${code}`);
+            router.push(
+                `/room/${code}?name=${encodeURIComponent(creatorName)}`,
+            );
         } catch {
             setError("Failed to create room. Please try again.");
             setIsLoading(false);
@@ -47,7 +49,8 @@ export default function Home() {
             setError("Room code must be 6 characters.");
             return;
         }
-        router.push(`/room/${roomCode.toUpperCase()}`);
+        const url = `/room/${roomCode.toUpperCase()}${initialName ? `?name=${encodeURIComponent(initialName)}` : ""}`;
+        router.push(url);
     };
 
     return (
@@ -206,6 +209,20 @@ export default function Home() {
                                             )
                                         }
                                         className="w-full p-4 rounded-xl bg-muted border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-center text-2xl font-mono tracking-[0.5em]"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-secondary ml-1 uppercase tracking-wider">
+                                        Your Name (Optional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Anonymous"
+                                        value={initialName}
+                                        onChange={(e) =>
+                                            setInitialName(e.target.value)
+                                        }
+                                        className="w-full p-4 rounded-xl bg-muted border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                     />
                                 </div>
                                 {error && (

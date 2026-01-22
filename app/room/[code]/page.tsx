@@ -1,14 +1,15 @@
 "use client";
 
 import { api } from "@/convex/_generated/api";
+import { getSessionId } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import {
     AnimatePresence,
     motion,
+    PanInfo,
     useMotionValue,
     useTransform,
-    PanInfo,
 } from "framer-motion";
 import {
     ArrowLeft,
@@ -19,12 +20,13 @@ import {
     UserCircle,
     Users,
 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export default function ChatRoom() {
     const { code } = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const room = useQuery(api.rooms.getByCode, { code: code as string });
     const messages = useQuery(
         api.messages.list,
@@ -32,7 +34,11 @@ export default function ChatRoom() {
     );
     const sendMessage = useMutation(api.messages.send);
 
-    const [currentName, setCurrentName] = useState("Anonymous");
+    const sessionId = useMemo(() => getSessionId(), []);
+    const [currentName, setCurrentName] = useState(
+        searchParams.get("name") || "Anonymous",
+    );
+
     const [inputText, setInputText] = useState("");
     const [showInfo, setShowInfo] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -43,6 +49,7 @@ export default function ChatRoom() {
     } | null>(null);
 
     const scrollRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
 
     // Scroll to bottom on new messages
     useEffect(() => {
@@ -50,6 +57,13 @@ export default function ChatRoom() {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [messages]);
+
+    // Auto-focus input when replying
+    useEffect(() => {
+        if (replyTo && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [replyTo]);
 
     const handleSend = async (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -62,6 +76,7 @@ export default function ChatRoom() {
         await sendMessage({
             roomId: room._id,
             senderName: currentName,
+            sessionId: sessionId,
             content: content,
         });
 
@@ -122,29 +137,34 @@ export default function ChatRoom() {
             {/* Message List */}
             <div
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto pt-20 pb-24 px-4 space-y-4 scroll-smooth"
+                className="flex-1 overflow-y-auto pt-20 px-4 space-y-4 scroll-smooth"
             >
+                <div className="h-4" /> {/* Top Spacer */}
                 <div className="flex flex-col items-center py-8 opacity-40">
                     <Users size={32} />
                     <p className="text-xs mt-2 uppercase tracking-tighter">
                         You joined {room.name}
                     </p>
                 </div>
-
                 {messages?.map((msg) => (
                     <MessageBubble
                         key={msg._id}
                         message={msg}
-                        isMe={msg.senderName === currentName}
-                        onReply={(m) =>
+                        isMe={msg.sessionId === sessionId}
+                        onReply={(m) => {
+                            const mainContent = m.content.startsWith(">> @")
+                                ? m.content.split("\n\n").slice(1).join("\n\n")
+                                : m.content;
+
                             setReplyTo({
                                 id: m._id,
                                 sender: m.senderName,
-                                content: m.content,
-                            })
-                        }
+                                content: mainContent,
+                            });
+                        }}
                     />
                 ))}
+                <div className="h-32" /> {/* Bottom Spacer to prevent cutoff */}
             </div>
 
             {/* Input Section */}
@@ -205,6 +225,7 @@ export default function ChatRoom() {
                             className="flex-1 flex bg-surface border border-border rounded-2xl items-end px-4 py-2"
                         >
                             <textarea
+                                ref={inputRef}
                                 rows={1}
                                 placeholder="Message"
                                 value={inputText}
@@ -264,6 +285,10 @@ export default function ChatRoom() {
                                 <p className="text-secondary text-sm">
                                     Created by {room.creatorName}
                                 </p>
+                                <p className="text-[10px] text-pink-500/60 uppercase tracking-tighter mt-1">
+                                    Privacy Note: Messages are deleted every 1h,
+                                    rooms every 24h.
+                                </p>
                             </div>
 
                             <div className="w-full space-y-2">
@@ -310,6 +335,7 @@ interface Message {
     _creationTime: number;
     senderName: string;
     content: string;
+    sessionId: string;
 }
 
 function MessageBubble({

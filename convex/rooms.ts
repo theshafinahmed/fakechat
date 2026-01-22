@@ -13,6 +13,7 @@ export const create = mutation({
             name: args.name,
             code: code,
             creatorName: args.creatorName,
+            lastActivityAt: Date.now(),
         });
         return { roomId, code };
     },
