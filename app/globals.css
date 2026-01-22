@@ -56,7 +56,13 @@
     }
 
     .glass-effect {
-        @apply bg-opacity-80 backdrop-blur-xl border-b border-white/[0.05];
+        background-color: color-mix(
+            in srgb,
+            var(--color-surface),
+            transparent 20%
+        );
+        backdrop-filter: blur(24px);
+        @apply border-b border-white/5;
     }
 
     /* Prevent pull-to-refresh on mobile for a more native feel */
