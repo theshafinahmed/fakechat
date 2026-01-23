@@ -100,9 +100,16 @@ export default function ChatRoom() {
                     setIsSubscribed(true);
                 }
             }
-        } catch (err) {
+        } catch (err: unknown) {
             console.error("Notification toggle failed:", err);
-            alert("Please allow notifications in your browser settings.");
+            if (
+                err instanceof Error &&
+                err.message === "VAPID Public Key not found"
+            ) {
+                alert("App configuration error: Push keys missing in Vercel.");
+            } else {
+                alert("Please allow notifications in your browser settings.");
+            }
         }
     };
 
