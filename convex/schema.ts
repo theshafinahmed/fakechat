@@ -15,4 +15,10 @@ export default defineSchema({
         sessionId: v.string(), // UUID stored in localStorage
         content: v.string(),
     }).index("by_room", ["roomId"]),
+
+    subscriptions: defineTable({
+        roomId: v.id("rooms"),
+        sessionId: v.string(),
+        subscription: v.string(), // The push subscription JSON string
+    }).index("by_room", ["roomId"]),
 });

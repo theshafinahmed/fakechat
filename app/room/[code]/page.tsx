@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/convex/_generated/api";
+import { subscribeUserToPush } from "@/lib/notifications";
 import { getSessionId } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
@@ -13,6 +14,8 @@ import {
 } from "framer-motion";
 import {
     ArrowLeft,
+    Bell,
+    BellOff,
     Check,
     Copy,
     Info,
@@ -33,6 +36,7 @@ export default function ChatRoom() {
         room ? { roomId: room._id } : "skip",
     );
     const sendMessage = useMutation(api.messages.send);
+    const subscribeToNotifications = useMutation(api.notifications.subscribe);
 
     const sessionId = useMemo(() => getSessionId(), []);
     const [currentName, setCurrentName] = useState(
@@ -42,6 +46,7 @@ export default function ChatRoom() {
     const [inputText, setInputText] = useState("");
     const [showInfo, setShowInfo] = useState(false);
     const [showNameSwitcher, setShowNameSwitcher] = useState(false);
+    const [isSubscribed, setIsSubscribed] = useState(false);
     const [copied, setCopied] = useState(false);
     const [replyTo, setReplyTo] = useState<{
         id: string;
@@ -65,6 +70,41 @@ export default function ChatRoom() {
             inputRef.current.focus();
         }
     }, [replyTo]);
+
+    // Check notification status on load
+    useEffect(() => {
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.ready.then((reg) => {
+                reg.pushManager.getSubscription().then((sub) => {
+                    setIsSubscribed(!!sub);
+                });
+            });
+        }
+    }, []);
+
+    const handleNotificationToggle = async () => {
+        try {
+            if (isSubscribed) {
+                const reg = await navigator.serviceWorker.ready;
+                const sub = await reg.pushManager.getSubscription();
+                await sub?.unsubscribe();
+                setIsSubscribed(false);
+            } else {
+                const sub = await subscribeUserToPush();
+                if (sub && room) {
+                    await subscribeToNotifications({
+                        roomId: room._id,
+                        sessionId: sessionId,
+                        subscription: JSON.stringify(sub),
+                    });
+                    setIsSubscribed(true);
+                }
+            }
+        } catch (err) {
+            console.error("Notification toggle failed:", err);
+            alert("Please allow notifications in your browser settings.");
+        }
+    };
 
     const handleSend = async (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -132,12 +172,35 @@ export default function ChatRoom() {
                     </div>
                 </div>
 
-                <button
-                    onClick={() => setShowInfo(true)}
-                    className="p-2 hover:bg-surface rounded-full transition-colors"
-                >
-                    <Info size={24} />
-                </button>
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={handleNotificationToggle}
+                        className={cn(
+                            "p-2 rounded-full transition-colors",
+                            isSubscribed
+                                ? "text-primary hover:bg-primary/10"
+                                : "text-secondary hover:bg-surface",
+                        )}
+                        title={
+                            isSubscribed
+                                ? "Disable Notifications"
+                                : "Enable Notifications"
+                        }
+                    >
+                        {isSubscribed ? (
+                            <Bell size={22} />
+                        ) : (
+                            <BellOff size={22} />
+                        )}
+                    </button>
+
+                    <button
+                        onClick={() => setShowInfo(true)}
+                        className="p-2 hover:bg-surface rounded-full transition-colors"
+                    >
+                        <Info size={24} />
+                    </button>
+                </div>
             </header>
 
             {/* Message List */}
