@@ -1,9 +1,11 @@
+"use node";
+
 import { v } from "convex/values";
 import * as webpush from "web-push";
 import { internal } from "./_generated/api";
-import { action } from "./_generated/server";
+import { internalAction } from "./_generated/server";
 
-export const sendNotification = action({
+export const sendNotification = internalAction({
     args: {
         roomId: v.id("rooms"),
         roomName: v.string(),
